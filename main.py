@@ -181,7 +181,7 @@ class vzr:
     url = 'https://www.ingos.ru/travel/abroad/calc/?country={}&datebegin={}&dateend={}&years={}'
     countries = []
     countries_rus = []
-    dates = []
+    dates = {}
     ages = ''
     def country(req, res):
         vzr.countries.clear()
@@ -249,7 +249,7 @@ class vzr:
         return hints
         
     def dateBegin(req, res):
-        vzr.dates.clear()
+        vzr.dates = {}
         global db_but
         hints = vzr.date_hints(7)
         db_but = [{"title": hints[0], "hide": True},
@@ -303,30 +303,30 @@ class vzr:
             res['response']['tts'] = 'Дата не может быть раньше завтрашнего дня. Введите дату в формате день, месяц, год.'
             res['response']['buttons'] = db_but
             return
-        elif len(vzr.dates) == 1 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) <= datetime(int(vzr.dates[0].split('.')[2]),int(vzr.dates[0].split('.')[1]),int(vzr.dates[0].split('.')[0])):
+        elif len(vzr.dates) == 1 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) <= datetime(int(vzr.dates['1st'].split('.')[2]),int(vzr.dates['1st'].split('.')[1]),int(vzr.dates['1st'].split('.')[0])):
             res['response']['text'] = 'Дата окончания действия полиса указана некорректно. Введите дату завершения поездки.'
             res['response']['buttons'] = de_but
             return
         elif len(vzr.dates) == 0 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime.today():
             if vzr.asia == 1:
                 if datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime.today() + timedelta(days = 5):
-                    vzr.dates.append(str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0]))
+                    vzr.dates['1st']=str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0])
                 else:
                     res['response']['text'] = 'Для стран Юго-Восточной Азии ближайшая дата начала действия полиса'+str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y"))+'. Выберите эту дату или ведите другую.'
                     res['response']['buttons'] = db_but.insert(0,str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y")).replace('-','.'))
                     return
-                    vzr.dates.append(str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y")).replace('-','.'))
+                    vzr.dates['1st']=str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y")).replace('-','.')
             else:
-                vzr.dates.insert(0,str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0]))
-        elif len(vzr.dates) == 1 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime(int(vzr.dates[0].split('.')[2]),int(vzr.dates[0].split('.')[1]),int(vzr.dates[0].split('.')[0])):
-            vzr.dates.append (str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0]))
-        vzr.dates = list(set(vzr.dates))
+                vzr.dates['1st']=str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0])
+        elif len(vzr.dates) == 1 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime(int(vzr.dates['1st'].split('.')[2]),int(vzr.dates['1st'].split('.')[1]),int(vzr.dates['1st'].split('.')[0])):
+            vzr.dates['2nd']=str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0])
+        #vzr.dates = list(set(vzr.dates))
         return vzr.dates
 
 vzr.ages = ''
 vzr.countries.clear()
 vzr.countries_rus.clear()
-vzr.dates.clear()
+vzr.dates = {}
 vzr.url = 'https://www.ingos.ru/travel/abroad/calc/?country={}&datebegin={}&dateend={}&years={}'
 
 # Функция для непосредственной обработки диалога.
@@ -392,7 +392,7 @@ def handle_dialog(req, res):
         vzr.ages = ''
         vzr.countries.clear()
         vzr.countries_rus.clear()
-        vzr.dates.clear()
+        vzr.dates = {}
         link = ''
     elif "спасибо" in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Всегда рады помочь! Не забудьте узнать о наших остальных продуктах - вернитесь в начало диалога.'
@@ -438,7 +438,7 @@ def handle_dialog(req, res):
     if (len(vzr.dates) == 2 and len(vzr.ages) == 0) or "изменить возраст" in req['request']['original_utterance'].lower():
         step = 4
         link = ''
-        vzr.dates = sorted(vzr.dates, key=lambda x: '.'.join(reversed(x.split('.'))))
+        #vzr.dates = sorted(vzr.dates, key=lambda x: '.'.join(reversed(x.split('.'))))
         res['response']['text'] = 'Сколько полных лет каждому путешественнику на текущую дату? Например так: 30, 30, 32'
         buts = [{"title": "В начало", "hide": True},
                 {"title": "Выход", "hide": True}]
@@ -456,7 +456,7 @@ def handle_dialog(req, res):
                             fine_ages.append(str(i['value']))
                     except:
                         continue
-                res['response']['text'] = 'Что-то не так. Укажите возраст каждого из путешественников на текущую дату. Например так: 30, 30, 32'
+                res['response']['text'] = 'Укажите возраст каждого из путешественников на текущую дату. Например так: 30, 30, 32'
                 res['response']['buttons'] = [{"title": "В начало", "hide": True},
                 {"title": "Выход", "hide": True}]                
             elif req['request']['original_utterance'].lower() in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.']:
@@ -482,14 +482,14 @@ def handle_dialog(req, res):
                 res['response']['buttons'] = buttons
         if len(fine_ages) > 0:
             vzr.ages = ','.join(fine_ages)
-            link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates[0],vzr.dates[1],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
+            link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
     if len(link) > 0:
         step = 5
         res['response']['text'] = '''
         Вы выбрали страны: {}. 
         Дата начала действия полиса - {}, 
         дата окончания действия полиса - {}. 
-        Возраст путешественников: {}'''.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper(),str(vzr.dates[0]),str(vzr.dates[1]),str(vzr.ages)).strip("\['\]").replace("'",'')
+        Возраст путешественников: {}'''.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper(),str(vzr.dates['1st']),str(vzr.dates['2nd']),str(vzr.ages)).strip("\['\]").replace("'",'')
         res['response']['tts'] = 'Ваш полис почти готов! Перед покупкой обязательно еще раз проверьте все данные.'
         res['response']['buttons'] = [{"title": "Получить полис","url": link,"hide": True}, 
                 {"title": "Изменить список стран", "hide": True},
