@@ -232,7 +232,7 @@ class vzr:
                      'июня','июля', 'августа', 'сентября', 'октября', 'ноября']
         hint1 = (datetime.today() + timedelta(days=delta)).strftime('%d.%m.%Y')
         if hint1[0] == '0':
-            hint1 = hint1.replace(hint1[0],'')
+            hint1 = hint1[1:]
         d = hint1.split('.')
         if d[1] == '12':
             d.remove(d[1])
@@ -244,7 +244,7 @@ class vzr:
                     d.insert(1, m)
         hint2 = ' '.join(d)
         if hint2[0] == '0':
-            hint2 = hint2.replace(hint2[0],'')
+            hint2 = hint2[1:]
         hints = [hint1,hint2]
         return hints
         
