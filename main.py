@@ -231,6 +231,8 @@ class vzr:
         ru_months = ['декабря', 'января', 'февраля', 'марта', 'апреля', 'мая',
                      'июня','июля', 'августа', 'сентября', 'октября', 'ноября']
         hint1 = (datetime.today() + timedelta(days=delta)).strftime('%d.%m.%Y')
+        if hint1[0] == '0':
+            hint1 = hint1.replace(hint1[0],'')
         d = hint1.split('.')
         if d[1] == '12':
             d.remove(d[1])
@@ -241,6 +243,8 @@ class vzr:
                     d.remove(d[1])
                     d.insert(1, m)
         hint2 = ' '.join(d)
+        if hint2[0] == '0':
+            hint2 = hint2.replace(hint2[0],'')
         hints = [hint1,hint2]
         return hints
         
@@ -476,10 +480,6 @@ def handle_dialog(req, res):
                         {"title": "Выход",
                         "hide": True}]
                 res['response']['buttons'] = buttons
-            #else:
-             #   res['response']['text'] = 'Что-то не так. Укажите возраст каждого из путешественников на текущую дату. Например так: 30, 30, 32'
-              #  res['response']['buttons'] = [{"title": "В начало", "hide": True},
-               # {"title": "Выход", "hide": True}]
         if len(fine_ages) > 0:
             vzr.ages = ','.join(fine_ages)
             link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates[0],vzr.dates[1],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
