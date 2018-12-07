@@ -33,7 +33,7 @@ def main():
             "end_session": False
         }
     }
-
+        
     handle_dialog(request.json, response)
 
     logging.info('Response: %r', response)
@@ -111,7 +111,7 @@ def greets(req, res):
         res['response']['text'] = nextgreet
     if req['request']['original_utterance'].lower() in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.']:
         leave(req,res)
-    return
+    return greets
 
 def products(req, res):
     global step
@@ -174,7 +174,7 @@ def products(req, res):
         if req['session']['new'] == False:
             res['response']['text'] = '''Кажется, я вас не понимаю. 
             Выберите продукт, который вас интересует, чтобы узнать больше о страховании '''
-    return 
+    return products
 
 class vzr:
     asia = 0
@@ -200,6 +200,7 @@ class vzr:
     def nextCountry(req, res):
         global fine_countries
         global all_countries
+        global country_buttons
         fine_countries = list(set(vzr.countries_rus))
         vzr.countries = list(set(vzr.countries))
         res['response']['buttons'] = country_buttons
@@ -331,9 +332,11 @@ vzr.url = 'https://www.ingos.ru/travel/abroad/calc/?country={}&datebegin={}&date
 
 # Функция для непосредственной обработки диалога.
 def handle_dialog(req, res):
+    global country_buttons
     global step
     global link
     step = 0
+    #greets(req, res)
     greets(req, res)
     products(req, res)
     travel = ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.']
@@ -349,7 +352,7 @@ def handle_dialog(req, res):
                     vzr.countries_rus.append(chozen_country)
             vzr.nextCountry(req, res)
             return
-    elif req['request']['original_utterance'].lower() not in all_countries and step == 0 and req['request']['original_utterance'].lower() not in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.'] and req['request']['original_utterance'].lower() not in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.'] and 'помощь' not in req['request']['original_utterance'].lower() and 'что ты умеешь' not in req['request']['original_utterance'].lower() and 'помоги' not in req['request']['original_utterance'].lower() and req['request']['original_utterance'].lower() not in ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.'] and req['request']['original_utterance'].lower() not in ['машину','машину.','автомобили.','автомобиль.','авто.','машина.','автомобили','автомобиль','авто','машина','каско','осаго'] and req['request']['original_utterance'].lower() not in ['здоровье.', 'жизнь.', 'здоровье и жизнь.','здоровье', 'жизнь', 'здоровье и жизнь', 'медицинское страхование', 'медицинский полис'] and req['request']['original_utterance'].lower() not in ['инвестиции.', 'инвестирование.', 'пенсия.', 'инвестиции и пенсия.','инвестиции', 'инвестирование', 'пенсия', 'инвестиции и пенсия'] and req['request']['original_utterance'].lower() not in ['имущество', 'недвижимость', 'дом', 'квартира', 'дача']:
+    elif req['request']['original_utterance'].lower() not in all_countries and step == 0 and req['request']['original_utterance'].lower() not in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.'] and req['request']['original_utterance'].lower() not in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.'] and 'помощь' not in req['request']['original_utterance'].lower() and 'что ты умеешь' not in req['request']['original_utterance'].lower() and 'помоги' not in req['request']['original_utterance'].lower() and req['request']['original_utterance'].lower() not in ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.'] and req['request']['original_utterance'].lower() not in ['машину','машину.','автомобили.','автомобиль.','авто.','машина.','автомобили','автомобиль','авто','машина','каско','осаго'] and req['request']['original_utterance'].lower() not in ['здоровье.', 'жизнь.', 'здоровье и жизнь.','здоровье', 'жизнь', 'здоровье и жизнь', 'медицинское страхование', 'медицинский полис'] and req['request']['original_utterance'].lower() not in ['инвестиции.', 'инвестирование.', 'пенсия.', 'инвестиции и пенсия.','инвестиции', 'инвестирование', 'пенсия', 'инвестиции и пенсия'] and req['request']['original_utterance'].lower() not in ['имущество', 'недвижимость', 'дом', 'квартира', 'дача'] and req['session']['new'] != True:
         if len(vzr.countries_rus) == 0:
             res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
             country_buttons = [{"title": "Шенген", "hide": True},
