@@ -321,14 +321,15 @@ class vzr:
                 vzr.dates['1st']=str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0])
         elif len(vzr.dates) == 1 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime(int(vzr.dates['1st'].split('.')[2]),int(vzr.dates['1st'].split('.')[1]),int(vzr.dates['1st'].split('.')[0])):
             vzr.dates['2nd']=str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0])
-        #vzr.dates = list(set(vzr.dates))
         return vzr.dates
+    
+    
 
 vzr.ages = ''
 vzr.countries.clear()
 vzr.countries_rus.clear()
 vzr.dates = {}
-vzr.url = 'https://www.ingos.ru/travel/abroad/calc/?country={}&datebegin={}&dateend={}&years={}'
+vzr.url = 'https://www.ingos.ru/travel/abroad/calc/?utm_source=alisa-yandex&utm_medium=organic&utm_campaign=vzr_alisa&country={}&datebegin={}&dateend={}&years={}'
 
 # Функция для непосредственной обработки диалога.
 def handle_dialog(req, res):
@@ -336,7 +337,6 @@ def handle_dialog(req, res):
     global step
     global link
     step = 0
-    #greets(req, res)
     greets(req, res)
     products(req, res)
     travel = ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.']
@@ -441,7 +441,6 @@ def handle_dialog(req, res):
     if (len(vzr.dates) == 2 and len(vzr.ages) == 0) or "изменить возраст" in req['request']['original_utterance'].lower():
         step = 4
         link = ''
-        #vzr.dates = sorted(vzr.dates, key=lambda x: '.'.join(reversed(x.split('.'))))
         res['response']['text'] = 'Сколько полных лет каждому путешественнику на текущую дату? Например так: 30, 30, 32'
         buts = [{"title": "В начало", "hide": True},
                 {"title": "Выход", "hide": True}]
