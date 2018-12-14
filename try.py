@@ -26,12 +26,24 @@ sessionStorage = {}
 def main():
 # Функция получает тело запроса и возвращает ответ.
     logging.info('Request: %r', request.json)
-    response = {"version": request.json['version'],
-                "session": request.json['session'],
-                "response": {"end_session": False}}
+
+    response = {
+        "version": request.json['version'],
+        "session": request.json['session'],
+        "response": {
+            "end_session": False
+        }
+    }
+        
     handle_dialog(request.json, response)
+
     logging.info('Response: %r', response)
-    return json.dumps(response, ensure_ascii=False, indent=2)
+
+    return json.dumps(
+        response,
+        ensure_ascii=False,
+        indent=2
+    )
 
 ## Открытие и чтение таблицы стран 
 def urlCountry():
@@ -180,8 +192,9 @@ def handle_dialog(req, res):
             res['response']['buttons'] = start_buttons
         if req['session']['new'] == True or 'нача' in product or 'начн'in product:
             greets(req,res)
+            return
         product = req['request']['original_utterance'].lower()
-
+    
     if re.match(r'авто|машин|каско|осаго|жизн|здоров|медиц|спор|инвест|пенси|пожил|имущ|недвиж|квартир|дом|дач',product):
         products(req, res)
         return
@@ -191,13 +204,12 @@ def handle_dialog(req, res):
         vzr.chooseCountry(req,res)
         return
 
-    if req['request']['original_utterance'].lower() in all_countries or profile == 'travel':
-        while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
-            for v in variants:
-                if req['request']['original_utterance'].lower() in list(v.values())[0]:
-                    chozen_country = list(v.values())[0][0]
-                    vzr.countries.append(list(v.keys())[0])
-                    vzr.countries_rus.append(chozen_country)
-            vzr.nextCountry(req, res)
-            return
-
+    if req['request']['original_utterance'].lower() in all_countries:
+    #while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
+        for v in variants:
+            if req['request']['original_utterance'].lower() in list(v.values())[0]:
+                chozen_country = list(v.values())[0][0]
+                vzr.countries.append(list(v.keys())[0])
+                vzr.countries_rus.append(chozen_country)
+        vzr.nextCountry(req, res)
+        return
