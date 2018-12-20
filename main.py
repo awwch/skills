@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import json
 import logging
 import random
+import re
 from datetime import datetime, timedelta
 from string import punctuation
 
@@ -33,16 +34,20 @@ def main():
             "end_session": False
         }
     }
-        
-    handle_dialog(request.json, response)
 
-    logging.info('Response: %r', response)
-
-    return json.dumps(
-        response,
-        ensure_ascii=False,
-        indent=2
-    )
+    sessionStorage['user_id'] = response['session']['user_id']
+    
+    while sessionStorage['user_id']:
+        handle_dialog(request.json, response)
+    
+        logging.info('Response: %r', response)
+    
+        return json.dumps(
+            response,
+            ensure_ascii=False,
+            indent=2
+        )
+        #response['response']['end_session'] = True
 
 # Основные функции диалога
     
@@ -122,43 +127,51 @@ def greets(req, res):
     return greets
 
 def products(req, res):
-    global travel
-    travel = ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.']
-    auto = ['машину','машину.','автомобили.','автомобиль.','авто.','машина.','автомобили','автомобиль','авто','машина','каско','осаго']
-    health = ['здоровье.', 'жизнь.', 'здоровье и жизнь.','здоровье', 'жизнь', 'здоровье и жизнь', 'медицинское страхование', 'медицинский полис']
-    invest = ['инвестиции.', 'инвестирование.', 'пенсия.', 'инвестиции и пенсия.','инвестиции', 'инвестирование', 'пенсия', 'инвестиции и пенсия']
-    prop = ['имущество', 'недвижимость', 'дом', 'квартира', 'дача']
-    if req['request']['original_utterance'].lower() in auto:
-        res['response']['text'] = 'Воспользуйтесь программами страхования транспортных средств и застрахуйте возможные риски, связанные с эксплуатацией автомобиля.'
+    prod = ''
+    if re.match(r'авто|машин|каско|осаго', req['request']['original_utterance'].lower()): 
+        res['response']['text'] = 'Воспользуйтесь программами страхования \
+        транспортных средств и застрахуйте возможные риски, связанные с \
+        эксплуатацией автомобиля.'
         res['response']['buttons'] = [{"title": "Узнать больше.","url": "https://www.ingos.ru/auto/","hide": True},
            {"title": "В начало","hide": True},{"title": "Выход","hide": True}]
-    elif req['request']['original_utterance'].lower() in health:
-        res['response']['text'] = 'Жизнь и здоровье - самые ценные ресурсы любого человека. Мы предлагаем разные продукты в этой сфере: от страхования от несчастного случая на соревнованиях до ДМС для получения качественной медицинской помощи.'
+        prod = 'auto'
+    elif re.match(r'жизн|здоров|медиц|спор', req['request']['original_utterance'].lower()): 
+        res['response']['text'] = 'Жизнь и здоровье - самые ценные ресурсы любого \
+        человека. Мы предлагаем разные продукты в этой сфере: от страхования от \
+        несчастного случая на соревнованиях до ДМС для получения качественной \
+        медицинской помощи.'
         res['response']['buttons'] = [{"title": "Узнать больше.","url": "https://www.ingos.ru/health_life/","hide": True},
            {"title": "В начало","hide": True},{"title": "Выход","hide": True}]
-    elif req['request']['original_utterance'].lower() in invest:
-        res['response']['text'] = 'Мы предлагаем не только программы пенсионного страхования, но и различные инструменты для инвестирования.'
+        prod = 'life'
+    elif re.match(r'инвест|пенси|пожил', req['request']['original_utterance'].lower()): 
+        res['response']['text'] = 'Мы предлагаем не только программы пенсионного \
+        страхования, но и различные инструменты для инвестирования.'
         res['response']['buttons'] = [{"title": "Узнать больше.","url": "https://www.ingos.ru/pension_investment/","hide": True},
            {"title": "В начало","hide": True},{"title": "Выход","hide": True}]
-    elif req['request']['original_utterance'].lower() in prop:
-        res['response']['text'] = 'Страхование имущества — дома, квартиры или дачи — это возможность защитить имущество и уберечь себя от непредвиденных финансовых затрат.'
+        prod = 'inv'
+    elif re.match(r'имущ|недвиж|квартир|дом|дач', req['request']['original_utterance'].lower()): 
+        res['response']['text'] = 'Страхование имущества — дома, квартиры или дачи — \
+        это возможность защитить имущество и уберечь себя от непредвиденных финансовых затрат.'
         res['response']['buttons'] = [{"title": "Узнать больше.","url": "https://www.ingos.ru/property/","hide": True},
            {"title": "В начало","hide": True},{"title": "Выход","hide": True}]
-    elif req['request']['original_utterance'].lower() in travel:
+        prod = 'prop'
+    elif re.match(r'путешест|грани|рубеж|поех|поез', req['request']['original_utterance'].lower()): 
         vzr.country(req, res)
+        #prod = 'travel'
         return
-    elif req['request']['original_utterance'].lower() in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.']:
+    elif re.match(r'заверш|законч|выход|выйти|выйди', req['request']['original_utterance'].lower()): 
         leave(req,res)
-    elif req['request']['original_utterance'].lower() in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.']:
+    elif  re.match(r'начал|заново', req['request']['original_utterance'].lower()): 
         greets(req, res)
     elif 'узнать больше' in req['request']['original_utterance'].lower():
-        res['response']['text'] = 'Надеюсь, моя помощь оказалась полезной. Обязательно ознакомьтесь с нашими предложениями по другим страховым продуктам.'
+        res['response']['text'] = 'Надеюсь, моя помощь оказалась полезной. Обязательно \
+        ознакомьтесь с нашими предложениями по другим страховым продуктам.'
         res['response']['buttons'] = [{"title": "В начало","hide": True},{"title": "Выход","hide": True}]
-    elif 'помощь' in req['request']['original_utterance'].lower() or 'помоги' in req['request']['original_utterance'].lower() or 'что ты умеешь' in req['request']['original_utterance'].lower():
+    elif 'помощ' in req['request']['original_utterance'].lower() or 'помог' in req['request']['original_utterance'].lower() or 'что ты умеешь' in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Я могу помочь вам рассчитать стоимость страховки \
         для путешествий, а также рассказать о других видах страхования в Ингосстрахе. \
         Чтобы рассчитать стоимость полиса для путешественника, выберите "Путешествия". \
-        Для расчета нужно знать страны поездки, даты, количество и возраст путешественников. \
+        Для расчета нужно знать страну поездки, даты, количество и возраст путешественников. \
         Чтобы ознакомиться с другими продуктами, выберите их из списка ниже.'
         buttons = [
             {"title": "Путешествия",
@@ -176,9 +189,11 @@ def products(req, res):
         res['response']['buttons'] = buttons
     else:
         if req['session']['new'] == False:
+            #if prod != 'travel':
             res['response']['text'] = 'Кажется, я вас не понимаю. Выберите "Путешествия" \
-            для расчета стоимости туристической страховки, либо другой страховой продукт, \
-            чтобы узнать о нем больше.'
+                для расчета стоимости туристической страховки, либо другой страховой продукт, \
+                чтобы узнать о нем больше.'
+            #if len(vzr.dates) == 1:
     return products
 
 class vzr:
@@ -198,8 +213,9 @@ class vzr:
            {"title": "В начало","hide": True},
            {"title": "Выход","hide": True}]
         res['response']['buttons'] = country_buttons
-        res['response']['text'] = random.choice(['В каких странах вы собираетесь пользоваться страховкой? Укажите первую страну посещения.',
-           'Для каких стран вам нужна страховка? Назовите первую страну для посещения.'])
+        res['response']['text'] = random.choice(['В какой стране вы собираетесь \
+           пользоваться страховкой?', # Укажите первую страну посещения.',
+           'Для какой страны вам нужна страховка?']) #Назовите первую страну для посещения.'])
         return
 
     def nextCountry(req, res):
@@ -223,13 +239,17 @@ class vzr:
            {"title": "В начало", "hide": True},
            {"title": "Выход", "hide": True}]
         res['response']['buttons'] = check_buttons
-        res['response']['text'] = 'Не забудьте! Для получения визы Финляндии полис должен действовать на момент подачи заявления.  Установите датой начала поездки дату подачи документов в посольство.'
+        res['response']['text'] = 'Не забудьте! Для получения визы Финляндии \
+        полис должен действовать на момент подачи заявления.  Установите датой \
+        начала поездки дату подачи документов в посольство.'
         return
 
     def checkAsia(req, res):
         global check_buttons
         res['response']['buttons'] = check_buttons
-        res['response']['text'] = 'Cтраховой полис для стран Юго-Восточной Азии может быть оформлен не позднее, чем за 5 календарных дней до начала запланированной поездки.'
+        res['response']['text'] = 'Cтраховой полис для стран Юго-Восточной Азии \
+        может быть оформлен не позднее, чем за 5 календарных дней до начала \
+        запланированной поездки.'
         return
     
     def date_hints(delta):
@@ -243,6 +263,9 @@ class vzr:
         if d[1] == '12':
             d.remove(d[1])
             d.insert(1,ru_months[0])
+        elif d[1] == '01' or d[1] == 1:
+            d.remove(d[1])
+            d.insert(1,ru_months[1])
         else:
             for m in ru_months:
                 if d[1] == str(ru_months.index(m)):
@@ -265,7 +288,8 @@ class vzr:
         res['response']['buttons'] = db_but
         res['response']['text'] = random.choice(['Когда начинается ваше путешествие?',
            'С какой даты необходимо оформить полис?'])
-        res['response']['tts'] = random.choice(['Когда начинается ваше путешествие? Укажите дату в формате день, месяц, год.',
+        res['response']['tts'] = random.choice(['Когда начинается ваше путешествие? \
+           Укажите дату в формате день, месяц, год.',
            'С какой даты необходимо оформить полис? Укажите дату в формате день, месяц, год.'])
         return
 
@@ -280,7 +304,8 @@ class vzr:
         if step == 1:
             res['response']['text'] = random.choice(['Когда заканчивается поездка?',
                'Когда полис должен закончить действие?'])
-            res['response']['tts'] = random.choice(['Когда заканчивается поездка? Укажите дату в формате день, месяц, год.',
+            res['response']['tts'] = random.choice(['Когда заканчивается поездка? \
+               Укажите дату в формате день, месяц, год.',
                'Когда полис должен закончить действие?Укажите дату в формате день, месяц, год.'])
             return
         else:
@@ -292,7 +317,8 @@ class vzr:
             if "YANDEX.DATETIME" in str(req['request']['nlu']['entities']):
                 if 'year' not in str(req['request']['nlu']['entities']) or 'month' not in str(req['request']['nlu']['entities']) or 'day' not in str(req['request']['nlu']['entities']):
                     vzr.ages = ''
-                    res['response']['text'] = 'Укажите, пожалуйста, точную дату окончания поездки: день, месяц, год.'
+                    res['response']['text'] = 'Укажите, пожалуйста, точную дату \
+                    окончания поездки: день, месяц, год.'
                     hints = vzr.date_hints(14)
                     de_but = [{"title": hints[0], "hide": True},
                       {"title": hints[1], "hide": True},
@@ -335,11 +361,13 @@ class vzr:
         fine_date = checkDate(fine_date)
         if len(vzr.dates) == 0 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) <= datetime.today():
             res['response']['text'] = 'Дата не может быть раньше завтрашнего дня.'
-            res['response']['tts'] = 'Дата не может быть раньше завтрашнего дня. Введите дату в формате день, месяц, год.'
+            res['response']['tts'] = 'Дата не может быть раньше завтрашнего дня. \
+            Введите дату в формате день, месяц, год.'
             res['response']['buttons'] = db_but
             return
         elif len(vzr.dates) == 1 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) <= datetime(int(vzr.dates['1st'].split('.')[2]),int(vzr.dates['1st'].split('.')[1]),int(vzr.dates['1st'].split('.')[0])):
-            res['response']['text'] = 'Дата окончания действия полиса указана некорректно. Введите дату завершения поездки.'
+            res['response']['text'] = 'Дата окончания действия полиса указана \
+            некорректно. Введите дату завершения поездки.'
             res['response']['buttons'] = de_but
             return
         elif len(vzr.dates) == 0 and datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime.today():
@@ -347,7 +375,8 @@ class vzr:
                 if datetime(int(fine_date[0]),int(fine_date[1]),int(fine_date[2])) > datetime.today() + timedelta(days = 5):
                     vzr.dates['1st']=str(fine_date[2])+'.'+str(fine_date[1])+'.'+str(fine_date[0])
                 else:
-                    res['response']['text'] = 'Для стран Юго-Восточной Азии ближайшая дата начала действия полиса'+str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y"))+'. Выберите эту дату или ведите другую.'
+                    res['response']['text'] = 'Для стран Юго-Восточной Азии \
+                    ближайшая дата начала действия полиса'+str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y"))+'. Выберите эту дату или ведите другую.'
                     res['response']['buttons'] = db_but.insert(0,str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y")).replace('-','.'))
                     return
                     vzr.dates['1st']=str((datetime.today()+timedelta(days = 5)).strftime("%d-%m-%Y")).replace('-','.')
@@ -374,42 +403,46 @@ def handle_dialog(req, res):
     profile = ''
     greets(req, res)
     products(req, res)
-    travel = ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.']
-    if req['request']['original_utterance'].lower() in travel:
+    #return
+    if re.match(r'путешест|грани|рубеж|поех|поез', req['request']['original_utterance'].lower()): 
         profile = 'travel'
         vzr.country(req, res)
         return
     if req['request']['original_utterance'].lower() in all_countries:
-        while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
+        if len(vzr.countries) < 1:#while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
             for v in variants:
                 if req['request']['original_utterance'].lower() in list(v.values())[0]:
                     chozen_country = list(v.values())[0][0]
                     vzr.countries.append(list(v.keys())[0])
                     vzr.countries_rus.append(chozen_country)
-            vzr.nextCountry(req, res)
-            return
-    elif req['request']['original_utterance'].lower() not in all_countries and profile == 'travel': #and req['request']['original_utterance'].lower() not in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.'] and req['request']['original_utterance'].lower() not in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.'] and 'помощь' not in req['request']['original_utterance'].lower() and 'что ты умеешь' not in req['request']['original_utterance'].lower() and 'помоги' not in req['request']['original_utterance'].lower() and req['request']['original_utterance'].lower() not in ['путешествие','путешествие.','путешествия.','путешествия', 'выезд за рубеж','выезд за рубеж.'] and req['request']['original_utterance'].lower() not in ['машину','машину.','автомобили.','автомобиль.','авто.','машина.','автомобили','автомобиль','авто','машина','каско','осаго'] and req['request']['original_utterance'].lower() not in ['здоровье.', 'жизнь.', 'здоровье и жизнь.','здоровье', 'жизнь', 'здоровье и жизнь', 'медицинское страхование', 'медицинский полис'] and req['request']['original_utterance'].lower() not in ['инвестиции.', 'инвестирование.', 'пенсия.', 'инвестиции и пенсия.','инвестиции', 'инвестирование', 'пенсия', 'инвестиции и пенсия'] and req['request']['original_utterance'].lower() not in ['имущество', 'недвижимость', 'дом', 'квартира', 'дача'] and req['session']['new'] != True:
+                    #vzr.nextCountry(req, res)
+                    return
+    elif req['request']['original_utterance'].lower() not in all_countries and profile == 'travel': 
         if len(vzr.countries_rus) == 0:
-            res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
+            res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите, в какую \
+            страну вы отправляетесь'#'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
             country_buttons = [{"title": "Шенген", "hide": True},
            {"title": "Италия", "hide": True},
            {"title": "Испания", "hide": True},
            {"title": "В начало","hide": True},
            {"title": "Выход","hide": True}]
             res['response']['buttons'] = country_buttons
-        elif len(vzr.countries_rus) > 0:
-            res['response']['text'] = 'Не понимаю. Вы выбрали: {}. Укажите следующую страну вашей поездки или перейдите на следующий шаг.'.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper())
-            country_buttons = [{"title": "Следующий шаг", "hide": True},
-                               {"title": "Шенген", "hide": True},
-                               {"title": "Италия", "hide": True},
-                               {"title": "Испания", "hide": True},
-                               {"title": "В начало","hide": True},
-                               {"title": "Выход","hide": True}]
-            res['response']['buttons'] = country_buttons#'''
+            return
+        #elif len(vzr.countries_rus) > 0:
+         #   res['response']['text'] = 'Не понимаю. Вы выбрали: {}. Укажите \
+          #  следующую страну вашей поездки или перейдите на следующий шаг.'.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper())
+           # country_buttons = [{"title": "Следующий шаг", "hide": True},
+            #                   {"title": "Шенген", "hide": True},
+             #                  {"title": "Италия", "hide": True},
+              #                 {"title": "Испания", "hide": True},
+               #                {"title": "В начало","hide": True},
+                #               {"title": "Выход","hide": True}]
+            #res['response']['buttons'] = country_buttons#'''
             
-    if 'изменить список' in req['request']['original_utterance'].lower():
+    if  re.match(r'.*мен.* стран',req['request']['original_utterance'].lower()):
         vzr.country(req, res)
-    elif 'следующий шаг' in req['request']['original_utterance'].lower() or 'закончить список' in req['request']['original_utterance'].lower() or 'дальше' in req['request']['original_utterance'].lower():
+        return
+    if len(vzr.countries) > 0: #or 'следующий шаг' in req['request']['original_utterance'].lower() or 'закончить список' in req['request']['original_utterance'].lower() or 'дальше' in req['request']['original_utterance'].lower():
         if 'finliandiia' in vzr.countries:
             vzr.checkFin(req, res)
             return
@@ -420,12 +453,13 @@ def handle_dialog(req, res):
         vzr.dateBegin(req, res)
         step = 1
         return
-    elif 'ясно' in req['request']['original_utterance'].lower() or "изменить даты" in req['request']['original_utterance'].lower() or "понятно" in req['request']['original_utterance'].lower() or "понял" in req['request']['original_utterance'].lower():
+    elif len(vzr.countries) > 0 or 'ясно' in req['request']['original_utterance'].lower() or re.match(r'.*мен.* дат',req['request']['original_utterance'].lower()) or "поня" in req['request']['original_utterance'].lower():
+        profile = ''
         vzr.ages = ''
         vzr.dateBegin(req, res)
         step = 1
         return
-    elif "получить полис" in req['request']['original_utterance'].lower():
+    elif "получить" in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Надеюсь, моя помощь оказалась полезной. Обязательно ознакомьтесь с нашими предложениями по другим страховым продуктам - вернитесь в начало диалога.'
         res['response']['buttons'] = [{"title": "В начало","hide": True},{"title": "Выход","hide": True}]
         vzr.ages = ''
@@ -433,7 +467,7 @@ def handle_dialog(req, res):
         vzr.countries_rus.clear()
         vzr.dates = {}
         link = ''
-    elif "спасибо" in req['request']['original_utterance'].lower():
+    elif "спасиб" in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Всегда рады помочь! Не забудьте узнать о наших остальных продуктах - вернитесь в начало диалога.'
         res['response']['buttons'] = [{"title": "В начало","hide": True},{"title": "Выход","hide": True}]
     elif "YANDEX.DATETIME" in str(req['request']['nlu']['entities']):
@@ -461,9 +495,9 @@ def handle_dialog(req, res):
                 vzr.dateEnd(req, res, step)
                 step += 1
                 vzr.ages = ''
-                return
+                return step
 
-    if (len(vzr.dates) == 2 and len(vzr.ages) == 0) or "изменить возраст" in req['request']['original_utterance'].lower():
+    if (len(vzr.dates) == 2 and len(vzr.ages) == 0) or "менить возраст" in req['request']['original_utterance'].lower() or "менять возраст" in req['request']['original_utterance'].lower():
         link = ''
         vzr.ages = ''
         res['response']['text'] = 'Сколько полных лет каждому путешественнику на текущую дату? Например так: 30, 30, 32'
@@ -474,9 +508,9 @@ def handle_dialog(req, res):
         return vzr.ages
     elif len(vzr.dates) == 2 and len(vzr.countries) != 0 and len(vzr.ages) != 0:
         fine_ages = []
-        if len(fine_ages) == 0:#####
+        if len(fine_ages) == 0:
             o = req['request']['nlu']['entities']
-            if len(o) != 0 and req['request']['original_utterance'].lower() not in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.'] and req['request']['original_utterance'].lower() not in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.'] and 'помощь' not in req['request']['original_utterance'].lower() and 'что ты умеешь' not in req['request']['original_utterance'].lower() and 'помоги' not in req['request']['original_utterance'].lower():
+            if len(o) != 0 and not re.match(r'заверш|законч|выход|выйти|выйди|нач|занов|помог|помощ|что ты умеешь', req['request']['original_utterance'].lower()):#req['request']['original_utterance'].lower() not in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.'] and req['request']['original_utterance'].lower() not in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.'] and 'помощь' not in req['request']['original_utterance'].lower() and 'что ты умеешь' not in req['request']['original_utterance'].lower() and 'помоги' not in req['request']['original_utterance'].lower():
                 for i in o:
                     try:
                         if int(i['value']):
@@ -486,12 +520,11 @@ def handle_dialog(req, res):
                 res['response']['text'] = 'Укажите возраст каждого из путешественников на текущую дату. Например так: 30, 30, 32'
                 res['response']['buttons'] = [{"title": "В начало", "hide": True},
                 {"title": "Выход", "hide": True}]
-                #check = 1
-            elif req['request']['original_utterance'].lower() in ['закончить', 'выход', 'завершить','закончить.', 'выход.', 'завершить.']:
+            elif re.match(r'заверш|законч|выход|выйти|выйди', req['request']['original_utterance'].lower()):
                 leave(req,res)
-            elif req['request']['original_utterance'].lower() in ['в начало', 'заново', 'начать сначала','в начало.', 'заново.', 'начать сначала.']:
+            elif re.match(r'нач|занов', req['request']['original_utterance'].lower()): 
                 greets(req, res)
-            elif 'помощь' in req['request']['original_utterance'].lower() or 'помоги' in req['request']['original_utterance'].lower() or 'что ты умеешь' in req['request']['original_utterance'].lower():
+            elif 'помощ' in req['request']['original_utterance'].lower() or 'помог' in req['request']['original_utterance'].lower() or 'что ты умеешь' in req['request']['original_utterance'].lower():
                 res['response']['text'] = 'Я могу помочь вам рассчитать стоимость страховки \
         для путешествий, а также рассказать о других видах страхования в Ингосстрахе. \
         Чтобы рассчитать стоимость полиса для путешественника, выберите "Путешествия". \
@@ -512,7 +545,6 @@ def handle_dialog(req, res):
                         "hide": True}]
                 res['response']['buttons'] = buttons
         if len(fine_ages) > 0:
-            #check = 0
             vzr.ages = ','.join(fine_ages)
             link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
         
@@ -524,9 +556,8 @@ def handle_dialog(req, res):
         Возраст путешественников: {}'''.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper(),str(vzr.dates['1st']),str(vzr.dates['2nd']),str(vzr.ages)).strip("\['\]").replace("'",'')
         res['response']['tts'] = 'Ваш полис почти готов! Перед покупкой обязательно еще раз проверьте все данные.'
         res['response']['buttons'] = [{"title": "Получить полис","url": link,"hide": True}, 
-                {"title": "Изменить список стран", "hide": True},
+                {"title": "Изменить страну", "hide": True},
                 {"title": "Изменить даты", "hide": True},
                 {"title": "Изменить возраст путешественников", "hide": True},
                 {"title": "В начало", "hide": True},
                 {"title": "Выход", "hide": True}]
-        
