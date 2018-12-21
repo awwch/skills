@@ -15,18 +15,25 @@ from flask import Flask, request
 app = Flask(__name__)
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(filename="sample.log", filemode="a", level=logging.INFO)
 
 # Хранилище данных о сессиях.
-sessionStorage = {}
-
+sessionStorage = []
+counter = 0
 # Задаем параметры приложения Flask.
 @app.route("/", methods=['POST'])
 
 def main():
 # Функция получает тело запроса и возвращает ответ.
+    global counter
+    
     logging.info('Request: %r', request.json)
-
+    
+    f_obj = open('update.log', 'a', encoding='utf-8')
+    logStr = str(logging.info('Request: %r', request.json))
+    string = str(datetime.now())[0:19] + ': ' + logStr + '\n'
+    f_obj.write(string)
+    f_obj.close()
     response = {
         "version": request.json['version'],
         "session": request.json['session'],
@@ -34,20 +41,27 @@ def main():
             "end_session": False
         }
     }
-
-    sessionStorage['user_id'] = response['session']['user_id']
     
-    while sessionStorage['user_id']:
-        handle_dialog(request.json, response)
+    session_id = response['session']['session_id']
+    sessionStorage.append(session_id)
+    #while session_id == sessionStorage[counter]:
+        
+    handle_dialog(request.json, response, session_id)
+    logging.info('Response: %r', response)
     
-        logging.info('Response: %r', response)
-    
-        return json.dumps(
+    f_obj = open('update.log', 'a', encoding='utf-8')
+    logStr = str(logging.info('Response: %r', response))
+    string = str(datetime.now())[0:19] + ': ' + logStr + '\n'
+    f_obj.write(string)
+    f_obj.close()
+        
+    return json.dumps(
             response,
             ensure_ascii=False,
             indent=2
         )
-        #response['response']['end_session'] = True
+    
+    counter += 1
 
 # Основные функции диалога
     
@@ -161,8 +175,9 @@ def products(req, res):
         return
     elif re.match(r'заверш|законч|выход|выйти|выйди', req['request']['original_utterance'].lower()): 
         leave(req,res)
-    elif  re.match(r'начал|заново', req['request']['original_utterance'].lower()): 
+    elif re.match(r'нач|занов', req['request']['original_utterance'].lower()) or 'в начало' in req['request']['original_utterance'].lower(): 
         greets(req, res)
+        return
     elif 'узнать больше' in req['request']['original_utterance'].lower():
         res['response']['text'] = 'Надеюсь, моя помощь оказалась полезной. Обязательно \
         ознакомьтесь с нашими предложениями по другим страховым продуктам.'
@@ -395,7 +410,7 @@ vzr.dates = {}
 vzr.url = 'https://www.ingos.ru/travel/abroad/calc/?utm_source=alisa-yandex&utm_medium=organic&utm_campaign=vzr_alisa&country={}&datebegin={}&dateend={}&years={}'
 # Функция для непосредственной обработки диалога.
 step = 1
-def handle_dialog(req, res):
+def handle_dialog(req, res, session_id):
     global country_buttons
     global link
     global profile
@@ -406,6 +421,9 @@ def handle_dialog(req, res):
     if re.match(r'путешест|грани|рубеж|поех|поез', req['request']['original_utterance'].lower()): 
         profile = 'travel'
         vzr.country(req, res)
+        return
+    if re.match(r'нач|занов', req['request']['original_utterance'].lower()):
+        greets(req, res)
         return
     if req['request']['original_utterance'].lower() in all_countries:
         while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
@@ -544,7 +562,8 @@ def handle_dialog(req, res):
                 res['response']['buttons'] = buttons
         if len(fine_ages) > 0:
             vzr.ages = ','.join(fine_ages)
-            link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
+            link = vzr.url.format(str(vzr.countries[0]).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
+            #ВСЕ СТРАНЫ: link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
         
     if len(link) > 0:
         res['response']['text'] = '''
