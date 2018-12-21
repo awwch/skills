@@ -409,13 +409,13 @@ def handle_dialog(req, res):
         vzr.country(req, res)
         return
     if req['request']['original_utterance'].lower() in all_countries:
-        if len(vzr.countries) < 1:#while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
+        while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
             for v in variants:
                 if req['request']['original_utterance'].lower() in list(v.values())[0]:
                     chozen_country = list(v.values())[0][0]
                     vzr.countries.append(list(v.keys())[0])
                     vzr.countries_rus.append(chozen_country)
-                    #vzr.nextCountry(req, res)
+                    vzr.nextCountry(req, res)
                     return
     elif req['request']['original_utterance'].lower() not in all_countries and profile == 'travel': 
         if len(vzr.countries_rus) == 0:
@@ -428,16 +428,16 @@ def handle_dialog(req, res):
            {"title": "Выход","hide": True}]
             res['response']['buttons'] = country_buttons
             return
-        #elif len(vzr.countries_rus) > 0:
-         #   res['response']['text'] = 'Не понимаю. Вы выбрали: {}. Укажите \
-          #  следующую страну вашей поездки или перейдите на следующий шаг.'.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper())
-           # country_buttons = [{"title": "Следующий шаг", "hide": True},
-            #                   {"title": "Шенген", "hide": True},
-             #                  {"title": "Италия", "hide": True},
-              #                 {"title": "Испания", "hide": True},
-               #                {"title": "В начало","hide": True},
-                #               {"title": "Выход","hide": True}]
-            #res['response']['buttons'] = country_buttons#'''
+        elif len(vzr.countries_rus) > 0:
+            res['response']['text'] = 'Не понимаю. Вы выбрали: {}. Укажите \
+            следующую страну вашей поездки или перейдите на следующий шаг.'.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper())
+            country_buttons = [{"title": "Следующий шаг", "hide": True},
+                               {"title": "Шенген", "hide": True},
+                               {"title": "Италия", "hide": True},
+                               {"title": "Испания", "hide": True},
+                               {"title": "В начало","hide": True},
+                               {"title": "Выход","hide": True}]
+            res['response']['buttons'] = country_buttons#'''
             
     if  re.match(r'.*мен.* стран',req['request']['original_utterance'].lower()):
         vzr.country(req, res)
