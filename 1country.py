@@ -213,9 +213,9 @@ class vzr:
            {"title": "В начало","hide": True},
            {"title": "Выход","hide": True}]
         res['response']['buttons'] = country_buttons
-        res['response']['text'] = random.choice(['В какой стране вы собираетесь \
-           пользоваться страховкой?', # Укажите первую страну посещения.',
-           'Для какой страны вам нужна страховка?']) #Назовите первую страну для посещения.'])
+        res['response']['text'] = random.choice(['В каких странах вы собираетесь \
+           пользоваться страховкой? Укажите первую страну посещения.',
+           'Для каких стран вам нужна страховка? Назовите первую страну для посещения.'])
         return
 
     def nextCountry(req, res):
@@ -405,23 +405,20 @@ def handle_dialog(req, res):
     products(req, res)
     if re.match(r'путешест|грани|рубеж|поех|поез', req['request']['original_utterance'].lower()): 
         profile = 'travel'
-      #  vzr.country(req, res)
-        return profile
+        vzr.country(req, res)
+        return
     if req['request']['original_utterance'].lower() in all_countries:
-        #while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
-        for v in variants:
-            if req['request']['original_utterance'].lower() in list(v.values())[0]:
-                chozen_country = list(v.values())[0][0]
-                vzr.countries.append(list(v.keys())[0])
-                vzr.countries_rus.append(chozen_country)
-                #vzr.nextCountry(req, res)
-                vzr.dateBegin(req, res)
-                step = 1
-                return
+        while req['request']['original_utterance'].lower() in all_countries and req['request']['original_utterance'].lower() != '':
+            for v in variants:
+                if req['request']['original_utterance'].lower() in list(v.values())[0]:
+                    chozen_country = list(v.values())[0][0]
+                    vzr.countries.append(list(v.keys())[0])
+                    vzr.countries_rus.append(chozen_country)
+                    vzr.nextCountry(req, res)
+                    return
     elif req['request']['original_utterance'].lower() not in all_countries and profile == 'travel': 
         if len(vzr.countries_rus) == 0:
-            res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите, в какую \
-            страну вы отправляетесь'#'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
+            res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
             country_buttons = [{"title": "Шенген", "hide": True},
            {"title": "Италия", "hide": True},
            {"title": "Испания", "hide": True},
@@ -429,21 +426,21 @@ def handle_dialog(req, res):
            {"title": "Выход","hide": True}]
             res['response']['buttons'] = country_buttons
             return
-        #elif len(vzr.countries_rus) > 0:
-         #   res['response']['text'] = 'Не понимаю. Вы выбрали: {}. Укажите \
-          #  следующую страну вашей поездки или перейдите на следующий шаг.'.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper())
-           # country_buttons = [{"title": "Следующий шаг", "hide": True},
-            #                   {"title": "Шенген", "hide": True},
-             #                  {"title": "Италия", "hide": True},
-              #                 {"title": "Испания", "hide": True},
-               #                {"title": "В начало","hide": True},
-                #               {"title": "Выход","hide": True}]
-            #res['response']['buttons'] = country_buttons#'''
+        elif len(vzr.countries_rus) > 0:
+            res['response']['text'] = 'Не понимаю. Вы выбрали: {}. Укажите \
+            следующую страну вашей поездки или перейдите на следующий шаг.'.format(str(list(set(vzr.countries_rus))).strip("\[\]").replace("'",'').upper())
+            country_buttons = [{"title": "Следующий шаг", "hide": True},
+                               {"title": "Шенген", "hide": True},
+                               {"title": "Италия", "hide": True},
+                               {"title": "Испания", "hide": True},
+                               {"title": "В начало","hide": True},
+                               {"title": "Выход","hide": True}]
+            res['response']['buttons'] = country_buttons#'''
             
     if  re.match(r'.*мен.* стран',req['request']['original_utterance'].lower()):
         vzr.country(req, res)
         return
-    if len(vzr.countries) > 0 or 'следующий шаг' in req['request']['original_utterance'].lower() or 'закончить список' in req['request']['original_utterance'].lower() or 'дальше' in req['request']['original_utterance'].lower():
+    if 'следующий шаг' in req['request']['original_utterance'].lower() or 'закончить список' in req['request']['original_utterance'].lower() or 'дальше' in req['request']['original_utterance'].lower():
         if 'finliandiia' in vzr.countries:
             vzr.checkFin(req, res)
             return
@@ -454,7 +451,7 @@ def handle_dialog(req, res):
         vzr.dateBegin(req, res)
         step = 1
         return
-    elif len(vzr.countries) > 0 or 'ясно' in req['request']['original_utterance'].lower() or re.match(r'.*мен.* дат',req['request']['original_utterance'].lower()) or "поня" in req['request']['original_utterance'].lower():
+    elif 'ясно' in req['request']['original_utterance'].lower() or re.match(r'.*мен.* дат',req['request']['original_utterance'].lower()) or "поня" in req['request']['original_utterance'].lower():
         profile = ''
         vzr.ages = ''
         vzr.dateBegin(req, res)
@@ -547,7 +544,8 @@ def handle_dialog(req, res):
                 res['response']['buttons'] = buttons
         if len(fine_ages) > 0:
             vzr.ages = ','.join(fine_ages)
-            link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
+            link = vzr.url.format(str(vzr.countries[0]).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
+            #ВСЕ СТРАНЫ: link = vzr.url.format(str(vzr.countries).strip("\[\]").replace("'",''),vzr.dates['1st'],vzr.dates['2nd'],vzr.ages.strip('.')).strip("\[\]").replace("'",'').replace(' ','')
         
     if len(link) > 0:
         res['response']['text'] = '''
