@@ -213,9 +213,9 @@ class vzr:
            {"title": "В начало","hide": True},
            {"title": "Выход","hide": True}]
         res['response']['buttons'] = country_buttons
-        res['response']['text'] = random.choice(['В какой стране вы собираетесь \
-           пользоваться страховкой?', # Укажите первую страну посещения.',
-           'Для какой страны вам нужна страховка?']) #Назовите первую страну для посещения.'])
+        res['response']['text'] = random.choice(['В каких странах вы собираетесь \
+           пользоваться страховкой? Укажите первую страну посещения.',
+           'Для каких стран вам нужна страховка? Назовите первую страну для посещения.'])
         return
 
     def nextCountry(req, res):
@@ -403,7 +403,6 @@ def handle_dialog(req, res):
     profile = ''
     greets(req, res)
     products(req, res)
-    #return
     if re.match(r'путешест|грани|рубеж|поех|поез', req['request']['original_utterance'].lower()): 
         profile = 'travel'
         vzr.country(req, res)
@@ -419,8 +418,7 @@ def handle_dialog(req, res):
                     return
     elif req['request']['original_utterance'].lower() not in all_countries and profile == 'travel': 
         if len(vzr.countries_rus) == 0:
-            res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите, в какую \
-            страну вы отправляетесь'#'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
+            res['response']['text'] = 'Боюсь, я вас не понимаю. Укажите первую страну вашей поездки.'
             country_buttons = [{"title": "Шенген", "hide": True},
            {"title": "Италия", "hide": True},
            {"title": "Испания", "hide": True},
@@ -442,7 +440,7 @@ def handle_dialog(req, res):
     if  re.match(r'.*мен.* стран',req['request']['original_utterance'].lower()):
         vzr.country(req, res)
         return
-    if len(vzr.countries) > 0: #or 'следующий шаг' in req['request']['original_utterance'].lower() or 'закончить список' in req['request']['original_utterance'].lower() or 'дальше' in req['request']['original_utterance'].lower():
+    if 'следующий шаг' in req['request']['original_utterance'].lower() or 'закончить список' in req['request']['original_utterance'].lower() or 'дальше' in req['request']['original_utterance'].lower():
         if 'finliandiia' in vzr.countries:
             vzr.checkFin(req, res)
             return
@@ -453,7 +451,7 @@ def handle_dialog(req, res):
         vzr.dateBegin(req, res)
         step = 1
         return
-    elif len(vzr.countries) > 0 or 'ясно' in req['request']['original_utterance'].lower() or re.match(r'.*мен.* дат',req['request']['original_utterance'].lower()) or "поня" in req['request']['original_utterance'].lower():
+    elif 'ясно' in req['request']['original_utterance'].lower() or re.match(r'.*мен.* дат',req['request']['original_utterance'].lower()) or "поня" in req['request']['original_utterance'].lower():
         profile = ''
         vzr.ages = ''
         vzr.dateBegin(req, res)
