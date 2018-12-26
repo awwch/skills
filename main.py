@@ -75,11 +75,25 @@ def urlCountry():
     for c in countries4url:
         line_vars = []
         for line in f:
-            if line.split(';')[-1].strip('\n') == c and line.split(';')[2].lower() not in line_vars:
-                line_vars.append(line.split(';')[2].lower())
-            if line.split(';')[0].lower().strip('\n') in countries_ru and line.split(';')[0].strip('\n').lower() in line_vars:
-                line_vars.remove(line.split(';')[0].strip('\n').lower())
-                line_vars.insert(0,line.split(';')[0].strip('\n').lower())
+            #print(f.index(line), line)
+            try:
+                if line.split(';')[-1].strip('\n') == c and line.split(';')[2].lower() not in line_vars:
+                    line_vars.append(line.split(';')[2].lower())
+                if line.split(';')[0].lower().strip('\n') in countries_ru and line.split(';')[0].strip('\n').lower() in line_vars:
+                    line_vars.remove(line.split(';')[0].strip('\n').lower())
+                    line_vars.insert(0,line.split(';')[0].strip('\n').lower())
+            except:
+                try:
+                    if line.split('\t')[-1].strip('\n') == c and line.split(';')[2].lower() not in line_vars:
+                        line_vars.append(line.split(';')[2].lower())
+                    if line.split('\t')[0].lower().strip('\n') in countries_ru and line.split(';')[0].strip('\n').lower() in line_vars:
+                        line_vars.remove(line.split(';')[0].strip('\n').lower())
+                        line_vars.insert(0,line.split(';')[0].strip('\n').lower())
+                except:
+                    continue
+
+                #print(f.index(line), line)
+                #break
         variants.append({c:line_vars})
     return variants, countries_ru
 
