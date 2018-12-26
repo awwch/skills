@@ -15,25 +15,26 @@ from flask import Flask, request
 app = Flask(__name__)
 
 
-logging.basicConfig(filename="sample.log", filemode="a", level=logging.INFO)
+#logging.basicConfig(filename="sample.log", filemode="a", level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 # Хранилище данных о сессиях.
-sessionStorage = []
-counter = 0
+sessionStorage = {}
+#counter = 0
 # Задаем параметры приложения Flask.
 @app.route("/", methods=['POST'])
 
 def main():
 # Функция получает тело запроса и возвращает ответ.
-    global counter
+#    global counter
     
     logging.info('Request: %r', request.json)
     
-    f_obj = open('update.log', 'a', encoding='utf-8')
-    logStr = str(logging.info('Request: %r', request.json))
-    string = str(datetime.now())[0:19] + ': ' + logStr + '\n'
-    f_obj.write(string)
-    f_obj.close()
+#    f_obj = open('update.log', 'a', encoding='utf-8')
+#    logStr = str(logging.info('Request: %r', request.json))
+#    string = str(datetime.now())[0:19] + ': ' + logStr + '\n'
+#    f_obj.write(string)
+#    f_obj.close()
     response = {
         "version": request.json['version'],
         "session": request.json['session'],
@@ -42,18 +43,17 @@ def main():
         }
     }
     
-    session_id = response['session']['session_id']
-    sessionStorage.append(session_id)
-    #while session_id == sessionStorage[counter]:
+#    session_id = response['session']['session_id']
+#    sessionStorage.append(session_id)
         
-    handle_dialog(request.json, response, session_id)
+    handle_dialog(request.json, response)
     logging.info('Response: %r', response)
     
-    f_obj = open('update.log', 'a', encoding='utf-8')
-    logStr = str(logging.info('Response: %r', response))
-    string = str(datetime.now())[0:19] + ': ' + logStr + '\n'
-    f_obj.write(string)
-    f_obj.close()
+#    f_obj = open('update.log', 'a', encoding='utf-8')
+#    logStr = str(logging.info('Response: %r', response))
+#    string = str(datetime.now())[0:19] + ': ' + logStr + '\n'
+#    f_obj.write(string)
+#    f_obj.close()
         
     return json.dumps(
             response,
@@ -61,7 +61,7 @@ def main():
             indent=2
         )
     
-    counter += 1
+#    counter += 1
 
 # Основные функции диалога
     
@@ -424,7 +424,7 @@ vzr.dates = {}
 vzr.url = 'https://www.ingos.ru/travel/abroad/calc/?utm_source=alisa-yandex&utm_medium=organic&utm_campaign=vzr_alisa&country={}&datebegin={}&dateend={}&years={}'
 # Функция для непосредственной обработки диалога.
 step = 1
-def handle_dialog(req, res, session_id):
+def handle_dialog(req, res):
     global country_buttons
     global link
     global profile
